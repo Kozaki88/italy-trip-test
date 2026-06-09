@@ -24,24 +24,21 @@ function App() {
           setInItaly(inside);
 
           if (inside) {
-            // Find closest phase based on distance to the first day's coordinates
-            // This is a simple heuristic: find the phase with the minimum distance
+            // Find closest phase based on distance to the phase's center
             let closestPhase = null;
             let minDistance = Infinity;
 
             tripPhases.forEach(phase => {
-              phase.days.forEach(day => {
-                const [dLat, dLng] = day.coordinates;
-                const dist = Math.sqrt(Math.pow(lat - dLat, 2) + Math.pow(lng - dLng, 2));
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  closestPhase = phase;
-                }
-              });
+              const [dLat, dLng] = phase.center;
+              const dist = Math.sqrt(Math.pow(lat - dLat, 2) + Math.pow(lng - dLng, 2));
+              if (dist < minDistance) {
+                minDistance = dist;
+                closestPhase = phase;
+              }
             });
 
-            // If within a reasonable degree distance (e.g. ~100km radius), set as current
-            if (minDistance < 1.0) {
+            // If within a reasonable degree distance (e.g. ~1.5 degree radius), set as current
+            if (minDistance < 1.5) {
               setCurrentPhase(closestPhase);
             } else {
               setCurrentPhase(null);
@@ -53,12 +50,19 @@ function App() {
         (error) => {
           console.error("Geolocation error:", error);
         },
-        { enableHighAccuracy: true, maximumAge: 60000, timeout: 5000 }
-      );
-
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
+
+  const requestLocationPermission = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        () => console.log("Location granted!"),
+        (error) => alert("Please allow location access in your device settings."),
+        { enableHighAccuracy: true }
+      );
+    }
+  };
 
   return (
     <div className="app-container">
@@ -89,13 +93,13 @@ function App() {
             inItaly={inItaly} 
             currentPhase={currentPhase} 
           />
-          <div className="location-status">
+          <div className="location-status" onClick={requestLocationPermission} style={{ cursor: 'pointer' }}>
             <Navigation size={18} color="#ef4444" />
             {userLocation 
               ? (inItaly 
                   ? (currentPhase ? `Near ${currentPhase.title}` : "Exploring Italy") 
                   : "Currently outside Italy (Showing full trip)")
-              : "Locating you..."}
+              : "Locating you... (Tap here to allow access)"}
           </div>
         </div>
 
