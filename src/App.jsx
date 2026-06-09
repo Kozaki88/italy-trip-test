@@ -50,6 +50,8 @@ function App() {
         (error) => {
           console.error("Geolocation error:", error);
         },
+        { enableHighAccuracy: true, maximumAge: 60000, timeout: 5000 }
+      );
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
